@@ -735,23 +735,24 @@ class JaxBreakout(JaxEnvironment[BreakoutState, BreakoutObservation, BreakoutInf
         )
         
         # --- Blocks ---
-        # Pass the grid as a 2D array
-        row_idx, col_idx = jnp.mgrid[:self.consts.NUM_ROWS, :self.consts.BLOCKS_PER_ROW]
-        blocks_xs = self.consts.BLOCK_START_X + col_idx * self.consts.BLOCK_SIZE[0]
-        blocks_ys = self.consts.BLOCK_START_Y + row_idx * self.consts.BLOCK_SIZE[1]
+        # Pass the grid as an array
+        blocks_array = jnp.arange(self.consts.NUM_ROWS * self.consts.BLOCK_PER_ROW, dtype=jnp.int32) # flat array for blocks
 
-        block_widths = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[0], dtype=jnp.int32)
-        block_heights = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[1], dtype=jnp.int32)
+        blocks_xs = self.consts.BLOCK_START_X + (blocks_array % self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[0]
+        blocks_ys = self.consts.BLOCK_START_Y + (blocks_array // self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[1]
+
+        blocks_widths = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[0], dtype=jnp.int32)
+        blocks_heights = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[1], dtype=jnp.int32)
 
         # Use the state.blocks array as the active flag (1 if existing, 0 if destroyed)
-        blocks_active = state.blocks.astype(jnp.int32)
+        blocks_active = state.blocks.ravel().astype(jnp.int32)
 
-        # Build the structured 2D ObjectObservation object
+        # Build the structured ObjectObservation object
         blocks = ObjectObservation.create(
-            x=blocks_xs.astype(jnp.int32),
-            y=blocks_ys.astype(jnp.int32),
-            width=block_widths,
-            height=block_heights,
+            x=blocks_xs,
+            y=blocks_ys,
+            width=blocks_widths,
+            height=blocks_heights,
             active=blocks_active
         )
 
