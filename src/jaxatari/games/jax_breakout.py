@@ -736,13 +736,14 @@ class JaxBreakout(JaxEnvironment[BreakoutState, BreakoutObservation, BreakoutInf
         
         # --- Blocks ---
         # Pass the grid as an array
-        blocks_array = jnp.arange(self.consts.NUM_ROWS * self.consts.BLOCKS_PER_ROW, dtype=jnp.int32) # flat array for blocks
+        num_blocks = self.consts.NUM_ROWS * self.consts.BLOCKS_PER_ROW
+        blocks_array = jnp.arange(num_blocks, dtype=jnp.int32) # flat array for blocks
 
         blocks_xs = self.consts.BLOCK_START_X + (blocks_array % self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[0]
         blocks_ys = self.consts.BLOCK_START_Y + (blocks_array // self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[1]
 
-        blocks_widths = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[0], dtype=jnp.int32)
-        blocks_heights = jnp.full((self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), self.consts.BLOCK_SIZE[1], dtype=jnp.int32)
+        blocks_widths = jnp.full((num_blocks,), self.consts.BLOCK_SIZE[0], dtype=jnp.int32)
+        blocks_heights = jnp.full((num_blocks,), self.consts.BLOCK_SIZE[1], dtype=jnp.int32)
 
         # Use the state.blocks array as the active flag (1 if existing, 0 if destroyed)
         blocks_active = state.blocks.ravel().astype(jnp.int32)
