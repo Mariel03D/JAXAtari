@@ -736,7 +736,7 @@ class JaxBreakout(JaxEnvironment[BreakoutState, BreakoutObservation, BreakoutInf
         
         # --- Blocks ---
         # Pass the grid as an array
-        blocks_array = jnp.arange(self.consts.NUM_ROWS * self.consts.BLOCK_PER_ROW, dtype=jnp.int32) # flat array for blocks
+        blocks_array = jnp.arange(self.consts.NUM_ROWS * self.consts.BLOCKS_PER_ROW, dtype=jnp.int32) # flat array for blocks
 
         blocks_xs = self.consts.BLOCK_START_X + (blocks_array % self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[0]
         blocks_ys = self.consts.BLOCK_START_Y + (blocks_array // self.consts.BLOCKS_PER_ROW) * self.consts.BLOCK_SIZE[1]
