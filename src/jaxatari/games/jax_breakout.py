@@ -803,7 +803,7 @@ class JaxBreakout(JaxEnvironment[BreakoutState, BreakoutObservation, BreakoutInf
         return spaces.Dict({
             "player": spaces.get_object_space(n=None, screen_size=(self.consts.WINDOW_HEIGHT, self.consts.WINDOW_WIDTH)),
             "ball": spaces.get_object_space(n=None, screen_size=(self.consts.WINDOW_HEIGHT, self.consts.WINDOW_WIDTH)),
-            "blocks": spaces.get_object_space(n=(self.consts.NUM_ROWS, self.consts.BLOCKS_PER_ROW), screen_size=(self.consts.WINDOW_HEIGHT, self.consts.WINDOW_WIDTH)),
+            "blocks": spaces.get_object_space(n=(self.consts.NUM_ROWS * self.consts.BLOCKS_PER_ROW), screen_size=(self.consts.WINDOW_HEIGHT, self.consts.WINDOW_WIDTH)),
             "lives": spaces.Box(low=0, high=self.consts.NUM_LIVES, shape=(), dtype=jnp.int32),
             "score": spaces.Box(low=0, high=jnp.iinfo(jnp.int32).max, shape=(), dtype=jnp.int32),
         })
