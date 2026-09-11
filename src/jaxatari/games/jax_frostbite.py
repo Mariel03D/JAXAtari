@@ -437,6 +437,7 @@ class FrostbiteObservation:
     bailey: ObjectObservation
     obstacles: ObjectObservation
     bear: ObjectObservation
+    ice: ObjectObservation
     ice_grid: jnp.ndarray
     igloo_progress: jnp.ndarray
     temperature: jnp.ndarray
@@ -912,6 +913,26 @@ class JaxFrostbite(JaxEnvironment[FrostbiteState, FrostbiteObservation, Frostbit
         hits = active & (px >= seg_x) & (px < seg_x + seg_w) # Shape: (4, 6, 16)
         ice_grid = jnp.any(hits, axis=1).astype(jnp.int32) # Shape: (4, 16)
 
+        # --- Ice as separate small cells ---
+        ICE_BLOCK_HEIGHT = 4 
+        ice_row_y = jnp.array(self.consts.ICE_ROW_Y, dtype=jnp.int32)  # (4,)
+        cell_y = jnp.broadcast_to(ice_row_y[:, None], (4, grid_width))  # (4, 16)
+        cell_x = jnp.broadcast_to(sample_xs[None, :], (4, grid_width))  # (4, 16)
+        cell_is_blue = (state.ice_colors[:, None] == self.consts.COLOR_ICE_BLUE)  # (4, 1)
+        cell_state = jnp.broadcast_to(cell_is_blue.astype(jnp.int32), (4, grid_width))  # (4, 16)
+        cell_ori = jnp.where(state.ice_directions[:, None] == 0, 90.0, 270.0)  # (4, 1)
+        cell_ori = jnp.broadcast_to(cell_ori, (4, grid_width)).astype(jnp.float32)  # (4, 16)
+ 
+        ice = ObjectObservation.create(
+            x=jnp.clip(cell_x.flatten(), 0, self.consts.SCREEN_WIDTH),
+            y=jnp.clip(cell_y.flatten(), 0, self.consts.SCREEN_HEIGHT),
+            width=jnp.full((4 * grid_width,), cell_width, dtype=jnp.int32),
+            height=jnp.full((4 * grid_width,), ICE_BLOCK_HEIGHT, dtype=jnp.int32),
+            orientation=cell_ori.flatten(),
+            state=cell_state.flatten(),
+            active=ice_grid.flatten()
+        )
+
         score_val = self._bcd_to_decimal(state.score)
         temp_val = self._bcd_to_decimal(jnp.array([0, 0, state.temperature], dtype=jnp.int32))
 
@@ -919,6 +940,7 @@ class JaxFrostbite(JaxEnvironment[FrostbiteState, FrostbiteObservation, Frostbit
             bailey=bailey,
             obstacles=obstacles,
             bear=bear,
+            ice=ice,
             ice_grid=ice_grid,
             igloo_progress=state.building_igloo_idx + 1, # -1..15 -> 0..16
             temperature=temp_val.astype(jnp.int32),
@@ -2908,6 +2930,8 @@ class JaxFrostbite(JaxEnvironment[FrostbiteState, FrostbiteObservation, Frostbit
             # Obstacles: Max 4 rows * 3 copies = 12 potential objects
             "obstacles": spaces.get_object_space(n=12, screen_size=(self.consts.SCREEN_HEIGHT, self.consts.SCREEN_WIDTH)),
             "bear": spaces.get_object_space(n=None, screen_size=(self.consts.SCREEN_HEIGHT, self.consts.SCREEN_WIDTH)),
+            # Ice: 4 rows * 16 grid columns = 64 ice-cell objects (matches ice_grid sampling)
+            "ice": spaces.get_object_space(n=64, screen_size=(self.consts.SCREEN_HEIGHT, self.consts.SCREEN_WIDTH)),
             # Ice Grid: 4 rows, discretized horizontally into ~10-12 pixel chunks (width 152 / 12 ~= 12 blocks)
             "ice_grid": spaces.Box(low=0, high=1, shape=(4, 16), dtype=jnp.int32),
             "igloo_progress": spaces.Box(low=0, high=16, shape=(), dtype=jnp.int32),
