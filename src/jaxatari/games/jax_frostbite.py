@@ -900,6 +900,9 @@ class JaxFrostbite(JaxEnvironment[FrostbiteState, FrostbiteObservation, Frostbit
         # We sample the "active block" logic at regular intervals
         grid_width = 16 # Discretize screen width into 16 chunks
         sample_xs = jnp.linspace(self.consts.PLAYFIELD_LEFT, self.consts.PLAYFIELD_RIGHT, grid_width).astype(jnp.int32)
+        cell_width = jnp.int32(
+            (self.consts.PLAYFIELD_RIGHT - self.consts.PLAYFIELD_LEFT) / (grid_width - 1)
+        )  # ~10px per cell
         
         pos = state.ice_segments_x # (4, 6)
         widths = state.ice_segments_w # (4, 6)
